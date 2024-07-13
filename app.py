@@ -1,5 +1,5 @@
 import logging
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_file
 from celery import Celery
 from datetime import datetime
 import os
@@ -47,6 +47,7 @@ def log_time():
         f.write(f"Current time: {datetime.now()}\n")
 
 
+
 @app.route('/api', methods=['GET'])
 def handle_request():
     sendmail = request.args.get('sendmail')
@@ -61,6 +62,13 @@ def handle_request():
         return jsonify({'status': 'Logged current time.'})
     
     return jsonify({'error': 'Invalid parameters.'})
+
+@app.route('/logs', methods=['GET'])
+def get_logs():
+    if os.path.exists(log_file):
+        return send_file(log_file, as_attachment=True)
+    else:
+        return jsonify({'error': 'Log file not found'}), 404
 
 if __name__ == '__main__':
     app.run(debug=True)
