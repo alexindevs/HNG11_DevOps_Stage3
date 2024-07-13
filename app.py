@@ -1,3 +1,4 @@
+from dotenv import load_dotenv
 import logging
 from flask import Flask, request, jsonify, send_file
 from celery import Celery
