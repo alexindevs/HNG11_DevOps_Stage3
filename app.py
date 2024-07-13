@@ -4,7 +4,11 @@ from flask import Flask, request, jsonify, send_file
 from celery import Celery
 from datetime import datetime
 import os
-from flask_mail import Mail, Message
+import smtplib
+from email.mime.text import MIMEText
+
+# Load environment variables
+load_dotenv()
 
 app = Flask(__name__)
 
@@ -16,13 +20,10 @@ celery = Celery(app.name, broker=app.config['CELERY_BROKER_URL'])
 celery.conf.update(app.config)
 
 # Configure email settings
-app.config['MAIL_SERVER'] = 'smtp-relay.brevo.com'
-app.config['MAIL_PORT'] = 587
-app.config['MAIL_USERNAME'] = 'alexindevs@gmai.com'
-app.config['MAIL_PASSWORD'] = 'OPxNtKJ6U1y9sc5Y'
-
-# Initialize Flask-Mail
-mail = Mail(app)
+MAIL_SERVER = 'smtp-relay.brevo.com'
+MAIL_PORT = 587
+MAIL_USERNAME = os.getenv('MAIL_USERNAME')
+MAIL_PASSWORD = os.getenv('MAIL_PASSWORD')
 
 log_file = '/var/log/messaging_system.log'
 
@@ -36,17 +37,23 @@ if not os.path.exists(log_file):
 
 @celery.task
 def send_email(recipient_email):
-    with app.app_context():
-        msg = Message('Test Email', sender='alexindevs@gmail.com', recipients=[recipient_email])
-        msg.body = 'This is a test email.'
-        mail.send(msg)
+    msg = MIMEText('This is a test email.')
+    msg['Subject'] = 'Test Email'
+    msg['From'] = MAIL_USERNAME
+    msg['To'] = recipient_email
+
+    try:
+        with smtplib.SMTP(MAIL_SERVER, MAIL_PORT) as server:
+            server.starttls()
+            server.login(MAIL_USERNAME, MAIL_PASSWORD)
+            server.sendmail(MAIL_USERNAME, recipient_email, msg.as_string())
+    except Exception as e:
+        app.logger.error(f'Error sending email: {str(e)}')
 
 @celery.task
 def log_time():
     with open(log_file, 'a') as f:
         f.write(f"Current time: {datetime.now()}\n")
-
-
 
 @app.route('/api', methods=['GET'])
 def handle_request():
