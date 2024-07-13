@@ -58,7 +58,7 @@ def log_time():
 @app.route('/api', methods=['GET'])
 def handle_request():
     sendmail = request.args.get('sendmail')
-    talktome = request.args.get('talktome')
+    talktome = 'talktome' in request.args
 
     if sendmail:
         send_email.delay(sendmail)
