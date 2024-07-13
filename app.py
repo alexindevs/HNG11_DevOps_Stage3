@@ -16,11 +16,10 @@ celery = Celery(app.name, broker=app.config['CELERY_BROKER_URL'])
 celery.conf.update(app.config)
 
 # Configure email settings
-app.config['MAIL_SERVER'] = 'smtp.gmail.com'
-app.config['MAIL_PORT'] = 465
-app.config['MAIL_USE_SSL'] = True
-app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME')
-app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')
+app.config['MAIL_SERVER'] = 'smtp-relay.brevo.com'
+app.config['MAIL_PORT'] = 587
+app.config['MAIL_USERNAME'] = 'alexindevs@gmai.com'
+app.config['MAIL_PASSWORD'] = 'OPxNtKJ6U1y9sc5Y'
 
 # Initialize Flask-Mail
 mail = Mail(app)
@@ -38,7 +37,7 @@ if not os.path.exists(log_file):
 @celery.task
 def send_email(recipient_email):
     with app.app_context():
-        msg = Message('Test Email', sender=app.config['MAIL_USERNAME'], recipients=[recipient_email])
+        msg = Message('Test Email', sender='alexindevs@gmail.com', recipients=[recipient_email])
         msg.body = 'This is a test email.'
         mail.send(msg)
 
@@ -72,4 +71,4 @@ def get_logs():
         return jsonify({'error': 'Log file not found'}), 404
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, host='0.0.0.0', port=5000)
